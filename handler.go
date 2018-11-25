@@ -1,14 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func indexPageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	indexTmpl, err := template.ParseFiles("html/layout.html", "html/index.html", "html/navbar.html")
+	indexTmpl, err := template.ParseFiles("html/layout.html", "html/index.html", "html/navbar.html", "html/footer.html")
 
 	err = indexTmpl.ExecuteTemplate(w, "layout", nil)
 	if err != nil {
@@ -17,9 +19,21 @@ func indexPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func registerPageHandler(w http.ResponseWriter, r *http.Request) {
+func eventHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	registerTmpl, err := template.ParseFiles("html/layout.html", "html/register.html", "html/navbar.html")
+	registerTmpl, err := template.ParseFiles("html/layout.html", "html/eventManagement.html", "html/navbar.html", "html/footer.html")
+
+	err = registerTmpl.ExecuteTemplate(w, "layout", nil)
+	if err != nil {
+		http.Error(w, "blog: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func eventAddingHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("here")
+	w.Header().Set("Content-Type", "text/html")
+	registerTmpl, err := template.ParseFiles("html/layout.html", "html/addEvent.html", "html/navbar.html", "html/footer.html")
 
 	err = registerTmpl.ExecuteTemplate(w, "layout", nil)
 	if err != nil {
@@ -35,8 +49,10 @@ func startServer() error {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/":
 			indexPageHandler(w, r)
-		case r.Method == http.MethodGet && r.URL.Path == "/register/":
-			registerPageHandler(w, r)
+		case r.Method == http.MethodGet && r.URL.Path == "/eventmanagement/":
+			eventHandler(w, r)
+		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/add/"):
+			eventAddingHandler(w, r)
 		}
 	})
 
