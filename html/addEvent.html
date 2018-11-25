@@ -72,50 +72,150 @@
       <div class="card bg-secondary shadow">
         <div class="card-header bg-white border-0">
           <div class="row align-items-center">
-            <div class="col-8">
+            <div class="col-6">
               <h3 class="mb-0">เพิ่มกิจกรรม</h3>
             </div>
           </div>
         </div>
         <div class="card-body">
-          <form>
-            <!-- <h6 class="heading-small text-muted mb-4">รายละเอียดหลักของโครงการ</h6> -->
-            <div class="pl-lg-4">
-              <div class="row">
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label" for="input-username">ชื่อหลักสูตร / กิจกรรม</label>
-                    <input type="text" id="input-username" class="form-control form-control-alternative" placeholder="กรอกชื่อหลักสูตร">
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label" for="input-first-name">สถานที่</label>
-                    <input type="text" id="input-first-name" class="form-control form-control-alternative" placeholder="ระบุสถานที่">
-                  </div>
-                </div>
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label" for="input-last-name">ผู้พูด</label>
-                    <input type="text" id="input-last-name" class="form-control form-control-alternative" placeholder="กรอกชื่อผู้บรรยาย">
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-lg-12">
-                  <div class="form-group">
-                    <label>รายละเอียดโครงการ</label>
-                    <textarea rows="4" class="form-control form-control-alternative" placeholder="ระบุรายละเอียดของโครงการ"></textarea>
-                  </div>
+          <!-- <form> -->
+          <!-- <h6 class="heading-small text-muted mb-4">รายละเอียดหลักของโครงการ</h6> -->
+          <div class="pl-lg-4">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="form-group">
+                  <label class="form-control-label" for="input-username">ชื่อหลักสูตร / กิจกรรม</label>
+                  <input type="text" id="input-username" class="form-control form-control-alternative" placeholder="กรอกชื่อหลักสูตร">
                 </div>
               </div>
             </div>
-          </form>
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="form-group">
+                  <label class="form-control-label" for="input-first-name">สถานที่</label>
+                  <input type="text" id="input-first-name" class="form-control form-control-alternative" placeholder="ระบุสถานที่">
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="form-group">
+                  <label class="form-control-label" for="input-last-name">ผู้พูด</label>
+                  <input type="text" id="input-last-name" class="form-control form-control-alternative" placeholder="กรอกชื่อผู้บรรยาย">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="form-group">
+                  <label>รายละเอียดโครงการ</label>
+                  <textarea rows="4" class="form-control form-control-alternative" placeholder="ระบุรายละเอียดของโครงการ"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="form-group">
+                  <label class="form-control-label" for="input-first-name">ระหว่างเวลา</label>
+                  <input type="time" id="start_time" class="form-control form-control-alternative">
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="form-group">
+                  <label class="form-control-label" for="input-last-name">ถึงเวลา</label>
+                  <input type="time" id="end_time" class="form-control form-control-alternative">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="form-group">
+                  <label class="form-control-label" for="input-first-name">ระหว่างเวลา</label>
+                  <input type="time" id="start_time" class="form-control form-control-alternative">
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="form-group">
+                  <label class="form-control-label" for="input-last-name">ถึงเวลา</label>
+                  <input type="time" id="end_time" class="form-control form-control-alternative">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="form-group">
+                  <table class="table table-borderless">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th><label class="form-control-label">ระหว่างวันที่</label></th>
+                        <th><label class="form-control-label">ถึงวันที่</label></th>
+                        <th><label class="form-control-label">จำนวนผู้เข้าร่วม</label></th>
+                        <th>#</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p>1.</p>
+                        </td>
+                        <td><input type="date" id="date_start" name="date_start[]"></td>
+                        <td><input type="date" id="date_end" name="date_end[]"></td>
+                        <td><input type="number" id="limit" name="limit[]"></td>
+                        <td><button name="add" id="add">เพิ่มรุ่น</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="form-group">
+                  <button type="button" class="btn btn-danger ">ยกเลิก</button>
+                  <button type="button" class="btn btn-primary mr-auto float-right" style="margin-left: 10px;">ยืนยัน</button>
+                  <button type="button" class="btn btn-warning  mr-auto float-right">รีเซ็ท</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- </form> -->
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  $(document).ready(function () {
+    var i = 1;
+    $('#add').click(function () {
+      i++;
+      text = '<tr id="row' + i + '"><td><p>1.</p></td>';
+      text +=
+        '<td><input type="date" id="date_start" name="date_start[]" class="form-control form-control-alternative"></td>';
+      text +=
+        '<td><input type="date" id="date_end" name="date_end[]" class="form-control form-control-alternative"></td>';
+      text +=
+        '<td><input type="number" id="limit" name="limit[]" class="form-control form-control-alternative"></td>';
+      text += '<td><button name="remove" id="' + i + '" class="btn btn-danger btn-remove">X</button></td></tr>'
+      $('#dynamic_field').append(text)
+    });
+
+    $(document).on('click', '.btn-remove', function () {
+      var button_id = $(this).attr("id");
+      $("#row" + button_id).remove();
+    });
+
+    $('#submit').click(function () {
+      $.ajax({
+        url: "name",
+        method: "post",
+        data: $("#add_name").serialize(),
+        success: function (data) {
+          alert(data);
+          $('#add_name')[0].reset();
+        }
+      })
+    })
+  });
+</script>
 {{end}}
