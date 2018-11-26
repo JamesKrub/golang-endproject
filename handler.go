@@ -31,7 +31,6 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func eventAddingHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("here")
 	w.Header().Set("Content-Type", "text/html")
 	registerTmpl, err := template.ParseFiles("html/layout.html", "html/addEvent.html", "html/navbar.html", "html/footer.html")
 
@@ -42,16 +41,9 @@ func eventAddingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func testHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("here")
-	w.Header().Set("Content-Type", "text/html")
-	registerTmpl, err := template.ParseFiles("html/layout.html", "html/test.html", "html/navbar.html", "html/footer.html")
+func addDataToDBHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "here")
 
-	err = registerTmpl.ExecuteTemplate(w, "layout", nil)
-	if err != nil {
-		http.Error(w, "blog: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
 }
 
 func startServer() error {
@@ -65,8 +57,8 @@ func startServer() error {
 			eventHandler(w, r)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/add/"):
 			eventAddingHandler(w, r)
-		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/test/"):
-			testHandler(w, r)
+		case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/add/toDB/"):
+			addDataToDBHandler(w, r)
 		}
 	})
 
