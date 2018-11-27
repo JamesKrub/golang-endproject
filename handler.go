@@ -5,8 +5,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"KBTGCourse/project/pq/post"
 )
+
+type Display struct {
+	data []post.Event
+}
 
 func indexPageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
@@ -23,14 +30,24 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	registerTmpl, err := template.ParseFiles("html/layout.html", "html/eventManagement.html", "html/navbar.html", "html/footer.html")
 
-	err = registerTmpl.ExecuteTemplate(w, "layout", nil)
+	data, err := post.All()
 	if err != nil {
-		http.Error(w, "blog: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "[eventHandler] select all data got error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	display := map[string]interface{}{
+		"events": data,
+	}
+
+	err = registerTmpl.ExecuteTemplate(w, "layout", display)
+	if err != nil {
+		http.Error(w, "[eventHandler] load html page got error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func eventAddingHandler(w http.ResponseWriter, r *http.Request) {
+func showAddHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	registerTmpl, err := template.ParseFiles("html/layout.html", "html/addEvent.html", "html/navbar.html", "html/footer.html")
 
@@ -42,12 +59,79 @@ func eventAddingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func addDataToDBHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "here")
+	var evnt post.Event
 
+	evnt.Name = r.FormValue("name")
+	evnt.Place = r.FormValue("place")
+	evnt.Speaker = r.FormValue("speaker")
+	evnt.Detail = r.FormValue("detail")
+
+	err := post.Insert(&evnt)
+	if err != nil {
+		fmt.Fprintf(w, "[Insert] got error: %s", err)
+		return
+	}
+
+	evnt.EventId = evnt.Id
+
+	data := r.PostForm
+	for i := 0; i < len(data["limit"]); i++ {
+		evnt.StartDate = data["start_date"][i]
+		evnt.EndDate = data["end_date"][i]
+		evnt.StartTime = data["start_time"][i]
+		evnt.EndTime = data["end_time"][i]
+		evnt.Limit = data["limit"][i]
+		post.InsertEventDetails(&evnt)
+	}
+}
+
+func DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/eventmanagement/delete/"))
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+
+	err = post.Delete(id)
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+	http.Redirect(w, r, "/eventmanagement/", http.StatusMovedPermanently)
+}
+
+func showUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/eventmanagement/update/"))
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+	// fmt.Println(id)
+	rs, err := post.FindByID(id)
+	if err != nil {
+		fmt.Fprintf(w, "[showUpdateHandler] FindByID got error: %s", err)
+		return
+	}
+
+	display := map[string]interface{}{
+		"name":    rs.Main.Name,
+		"place":   rs.Main.Place,
+		"speaker": rs.Main.Speaker,
+		"detail":  rs.Main.Detail,
+		"details": rs.Detail,
+	}
+
+	registerTmpl, err := template.ParseFiles("html/layout.html", "html/updateEvent.html", "html/navbar.html", "html/footer.html")
+
+	err = registerTmpl.ExecuteTemplate(w, "layout", display)
+	if err != nil {
+		http.Error(w, "blog: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func startServer() error {
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.Method, r.URL.Path)
 		switch {
@@ -56,9 +140,13 @@ func startServer() error {
 		case r.Method == http.MethodGet && r.URL.Path == "/eventmanagement/":
 			eventHandler(w, r)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/add/"):
-			eventAddingHandler(w, r)
+			showAddHandler(w, r)
 		case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/add/toDB/"):
 			addDataToDBHandler(w, r)
+		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/delete/"):
+			DeleteHandler(w, r)
+		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/update/"):
+			showUpdateHandler(w, r)
 		}
 	})
 
