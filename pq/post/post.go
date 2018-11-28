@@ -2,7 +2,10 @@ package post
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"log"
+	"strconv"
 
 	_ "github.com/lib/pq"
 )
@@ -43,11 +46,21 @@ type EventDetail struct {
 	StartDate string
 	EndDate   string
 	Limit     string
+	Count     int
 }
 
-type updateEvent struct {
+type UpdateEvent struct {
 	Main   Event
 	Detail []EventDetail
+}
+
+type Register struct {
+	Id     int
+	FName  string
+	LName  string
+	Tel    string
+	UserId string
+	Event  string
 }
 
 func Insert(e *Event) error {
@@ -102,8 +115,8 @@ func FindEventByID(id int) (Event, error) {
 	return ev, nil
 }
 
-func FindDetailByID(id int) (updateEvent, error) {
-	var rs updateEvent
+func FindDetailByID(id int) (UpdateEvent, error) {
+	var rs UpdateEvent
 	var ev Event
 	row := db.QueryRow("SELECT name, place, speaker, detail	FROM events WHERE id = $1", id)
 	err := row.Scan(&ev.Name, &ev.Place, &ev.Speaker, &ev.Detail)
@@ -111,22 +124,77 @@ func FindDetailByID(id int) (updateEvent, error) {
 		return rs, err
 	}
 
-	rows, err := db.Query("SELECT id, start_date, end_date, limitation, start_time, end_time FROM event_detail WHERE evnt_id = $1", id)
+	rows, err := db.Query("SELECT id, start_date, end_date, limitation, start_time, end_time FROM event_detail WHERE evnt_id = $1 ORDER BY id ASC", id)
 	if err != nil {
 		return rs, err
 	}
 	var evd []EventDetail
 	for rows.Next() {
 		var v EventDetail
+
 		err := rows.Scan(&v.Id, &v.StartDate, &v.EndDate, &v.Limit, &v.StartTime, &v.EndTime)
 		if err != nil {
 			return rs, err
 		}
+		tempID := strconv.Itoa(v.Id)
+		count, err := GetAmountJoiner(tempID)
+		if err != nil {
+			return rs, err
+		}
+		v.Count = count
+		fmt.Println(v.Count)
 		evd = append(evd, v)
 	}
 
-	rs = updateEvent{ev, evd}
+	rs = UpdateEvent{ev, evd}
 	return rs, nil
+}
+
+func GetLimit(id string) (int, error) {
+	var limit int
+	row := db.QueryRow("SELECT limitation FROM event_detail WHERE evnt_id = $1 ORDER BY id ASC", id)
+	err := row.Scan(&limit)
+	if err != nil {
+		return limit, err
+	}
+	return limit, nil
+}
+
+func GetAmountJoiner(id string) (int, error) {
+	var amount int
+	row := db.QueryRow("SELECT count(1) as amount FROM Register WHERE event = $1", id)
+	err := row.Scan(&amount)
+	if err != nil {
+		return amount, err
+	}
+	return amount, nil
+}
+
+func InsertRegister(reg *Register) error {
+	var (
+		amount int
+		limit  int
+	)
+
+	limit, err := GetLimit(reg.Event)
+	if err != nil {
+		return err
+	}
+
+	amount, err = GetAmountJoiner(reg.Event)
+	if err != nil {
+		return err
+	}
+
+	if amount >= limit {
+		return errors.New("amount of joiner exceed the limit")
+	}
+	_, err = db.Exec("INSERT INTO Register(fName, lName, tel, userId, event) VALUES ($1, $2, $3, $4, $5)", reg.FName, reg.LName, reg.Tel, reg.UserId, reg.Event)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // func Save(p *Post) error {

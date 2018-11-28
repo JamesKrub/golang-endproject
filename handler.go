@@ -58,7 +58,7 @@ func showAddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func addDataToDBHandler(w http.ResponseWriter, r *http.Request) {
+func addEventDataToDBHandler(w http.ResponseWriter, r *http.Request) {
 	var evnt post.Event
 
 	evnt.Name = r.FormValue("name")
@@ -85,7 +85,7 @@ func addDataToDBHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteHandler(w http.ResponseWriter, r *http.Request) {
+func DeleteEventFromDbHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/eventmanagement/delete/"))
 	if err != nil {
 		fmt.Fprintf(w, "%v", err)
@@ -171,17 +171,51 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registerTmpl, err := template.ParseFiles("html/layout.html", "html/register.html", "html/navbar.html", "html/footer.html")
+	rs, err := post.FindDetailByID(id)
+	if err != nil {
+		http.Error(w, "[registerHandler] FindDetailByID got error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	display := map[string]interface{}{
-		"id": id,
+		"main":   rs.Main,
+		"option": rs.Detail,
 	}
+	funcs := template.FuncMap{"add": add, "showOption": showOption}
+	registerTmpl := template.Must(template.New("foo").Funcs(funcs).ParseFiles("html/layout.html", "html/register.html", "html/navbar.html", "html/footer.html"))
 
 	err = registerTmpl.ExecuteTemplate(w, "layout", display)
 	if err != nil {
-		http.Error(w, "blog: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "[registerHandler] execute got error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func addRegisterToDbHandler(w http.ResponseWriter, r *http.Request) {
+	var reg post.Register
+
+	reg.FName = r.FormValue("fName")
+	reg.LName = r.FormValue("lName")
+	reg.UserId = r.FormValue("empId")
+	reg.Tel = r.FormValue("tel")
+	reg.Event = r.FormValue("eventSelected")
+
+	err := post.InsertRegister(&reg)
+	if err != nil {
+		fmt.Fprintf(w, "[addRegisterToDbHandler] got error: %s", err)
+		return
+	}
+}
+
+func add(x, y int) int {
+	return x + y
+}
+
+func showOption(count, limit int) bool {
+	if count < limit {
+		return true
+	}
+	return false
 }
 
 func startServer() error {
@@ -195,18 +229,19 @@ func startServer() error {
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/add/"):
 			showAddHandler(w, r)
 		case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/eventmanagement/") && strings.HasSuffix(r.URL.Path, "/add/toDB/"):
-			addDataToDBHandler(w, r)
+			addEventDataToDBHandler(w, r)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/delete/"):
-			DeleteHandler(w, r)
+			DeleteEventFromDbHandler(w, r)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/update/"):
 			showUpdateHandler(w, r)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/getDataToShow/"):
 			getDataToShowHandler(w, r)
-		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/getDataToShow/"):
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/register/"):
 			registerHandler(w, r)
 		case r.Method == http.MethodGet && r.URL.Path == "/events/":
 			eventsHandler(w, r)
+		case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/register/add/toDB/"):
+			addRegisterToDbHandler(w, r)
 		}
 	})
 
