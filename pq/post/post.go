@@ -90,7 +90,19 @@ func Delete(id int) error {
 	return nil
 }
 
-func FindByID(id int) (updateEvent, error) {
+func FindEventByID(id int) (Event, error) {
+	var ev Event
+	ev.Id = id
+	row := db.QueryRow("SELECT name, place, speaker, detail	FROM events WHERE id = $1", id)
+	err := row.Scan(&ev.Name, &ev.Place, &ev.Speaker, &ev.Detail)
+	if err != nil {
+		return ev, err
+	}
+
+	return ev, nil
+}
+
+func FindDetailByID(id int) (updateEvent, error) {
 	var rs updateEvent
 	var ev Event
 	row := db.QueryRow("SELECT name, place, speaker, detail	FROM events WHERE id = $1", id)

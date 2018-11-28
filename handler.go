@@ -97,7 +97,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%v", err)
 		return
 	}
-	http.Redirect(w, r, "/eventmanagement/", http.StatusMovedPermanently)
+	http.Redirect(w, r, "/eventmanagement/", http.StatusSeeOther)
 }
 
 func showUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -108,21 +108,74 @@ func showUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// fmt.Println(id)
-	rs, err := post.FindByID(id)
+	rs, err := post.FindEventByID(id)
 	if err != nil {
 		fmt.Fprintf(w, "[showUpdateHandler] FindByID got error: %s", err)
 		return
 	}
 
 	display := map[string]interface{}{
-		"name":    rs.Main.Name,
-		"place":   rs.Main.Place,
-		"speaker": rs.Main.Speaker,
-		"detail":  rs.Main.Detail,
+		"id":      rs.Id,
+		"name":    rs.Name,
+		"place":   rs.Place,
+		"speaker": rs.Speaker,
+		"detail":  rs.Detail,
 		"details": rs.Detail,
 	}
 
 	registerTmpl, err := template.ParseFiles("html/layout.html", "html/updateEvent.html", "html/navbar.html", "html/footer.html")
+
+	err = registerTmpl.ExecuteTemplate(w, "layout", display)
+	if err != nil {
+		http.Error(w, "blog: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func getDataToShowHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/eventmanagement/getDataToShow/"))
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+
+	fmt.Println(id)
+}
+
+func eventsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	registerTmpl, err := template.ParseFiles("html/layout.html", "html/event.html", "html/navbar.html", "html/footer.html")
+
+	data, err := post.All()
+	if err != nil {
+		http.Error(w, "[eventHandler] select all data got error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	display := map[string]interface{}{
+		"events": data,
+	}
+
+	err = registerTmpl.ExecuteTemplate(w, "layout", display)
+	if err != nil {
+		http.Error(w, "[eventHandler] load html page got error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/register/"))
+	if err != nil {
+		fmt.Fprintf(w, "[registerHandler] got error: %v", err)
+		return
+	}
+
+	registerTmpl, err := template.ParseFiles("html/layout.html", "html/register.html", "html/navbar.html", "html/footer.html")
+
+	display := map[string]interface{}{
+		"id": id,
+	}
 
 	err = registerTmpl.ExecuteTemplate(w, "layout", display)
 	if err != nil {
@@ -147,6 +200,13 @@ func startServer() error {
 			DeleteHandler(w, r)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/update/"):
 			showUpdateHandler(w, r)
+		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/getDataToShow/"):
+			getDataToShowHandler(w, r)
+		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/getDataToShow/"):
+		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/register/"):
+			registerHandler(w, r)
+		case r.Method == http.MethodGet && r.URL.Path == "/events/":
+			eventsHandler(w, r)
 		}
 	})
 

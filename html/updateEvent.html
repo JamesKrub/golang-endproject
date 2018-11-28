@@ -176,6 +176,16 @@
 <script>
   var i = 0;
 
+  $(document).ready(function(){
+    $.ajax({
+      url: '/eventmanagement/getDataToShow/{{.id}}',
+      method: "GET",
+      success: function (data) {
+
+      }
+    });
+  })
+
   $('#add').click(function () {
     i++;
     console.log(i);
