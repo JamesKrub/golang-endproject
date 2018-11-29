@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"KBTGCourse/project/pq/post"
+
+	"github.com/tealeg/xlsx"
 )
 
 type Display struct {
@@ -181,7 +183,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		"main":   rs.Main,
 		"option": rs.Detail,
 	}
-	funcs := template.FuncMap{"add": add, "showOption": showOption}
+	funcs := template.FuncMap{"add": add}
 	registerTmpl := template.Must(template.New("foo").Funcs(funcs).ParseFiles("html/layout.html", "html/register.html", "html/navbar.html", "html/footer.html"))
 
 	err = registerTmpl.ExecuteTemplate(w, "layout", display)
@@ -204,6 +206,71 @@ func addRegisterToDbHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "[addRegisterToDbHandler] got error: %s", err)
 		return
+	}
+}
+
+func exportHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/eventmanagement/export/"))
+	if err != nil {
+		log.Println(w, "[exportHandler] convert string to int got err: %s", id)
+		return
+	}
+
+	data, err := post.FindDetailByID(id)
+	if err != nil {
+		log.Println(w, "[exportHandler] export got err: %s", id)
+		return
+	}
+
+	var file *xlsx.File
+	var sheet *xlsx.Sheet
+	var row *xlsx.Row
+	var cell *xlsx.Cell
+
+	file = xlsx.NewFile()
+
+	w.Header().Set("Content-Disposition", "attachment; filename=export.xlsx")
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+	for i := 0; i < len(data.Detail); i++ {
+		filename := fmt.Sprintf("%s รุ่น %v", data.Main.Name, i)
+		sheet, err = file.AddSheet(filename)
+		if err != nil {
+			fmt.Printf("[exportHandler] add new sheet got err: %s", err)
+			return
+		}
+		row = sheet.AddRow()
+
+		cell = row.AddCell()
+		cell.Value = "รหัสพนักงาน"
+
+		cell = row.AddCell()
+		cell.Value = "ชื่อ - นามสกุล"
+
+		cell = row.AddCell()
+		cell.Value = "เบอร์โทร"
+
+		reg, err := post.GetRegister(data.Detail[i].Id)
+		if err != nil {
+			fmt.Printf("[exportHandler] GetRegister got err: %s", err)
+			return
+		}
+		for _, rep := range reg {
+			row = sheet.AddRow()
+			cell = row.AddCell()
+			cell.Value = fmt.Sprintf("%v", rep.UserId)
+
+			cell = row.AddCell()
+			cell.Value = rep.FName + " " + rep.LName
+
+			cell = row.AddCell()
+			cell.Value = rep.Tel
+		}
+	}
+
+	err = file.Write(w)
+	if err != nil {
+		fmt.Printf(err.Error())
 	}
 }
 
@@ -242,6 +309,8 @@ func startServer() error {
 			eventsHandler(w, r)
 		case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/register/add/toDB/"):
 			addRegisterToDbHandler(w, r)
+		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/eventmanagement/export/"):
+			exportHandler(w, r)
 		}
 	})
 

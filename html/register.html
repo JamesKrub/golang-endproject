@@ -93,7 +93,10 @@
                     <label class="form-control-label" for="input-username">เลือกรุ่นของกิจกรรม</label>
                     <select name="eventSelected" class="form-control form-control-alternative">
                       {{ range $index, $value := .option }}
-                      <option value="{{.Id}}">{{$.main.Name}} รุ่นที่ {{add $index 1}} ({{$value.StartDate}} - {{$value.EndDate}} {{$value.StartTime}} - {{$value.EndTime}}) {{$value.Count}}/{{$value.Limit}}</option>
+                      <p>{{.ShowOption}}</p>
+                        {{if .ShowOption}}
+                          <option value="{{.Id}}">{{$.main.Name}} รุ่นที่ {{add $index 1}} ({{$value.StartDate}} - {{$value.EndDate}} {{$value.StartTime}} - {{$value.EndTime}}) {{$value.Count}}/{{$value.Limit}}</option>
+                        {{end}}
                       {{end}}
                     </select>
                   </div>
@@ -148,7 +151,6 @@
     </div>
   </div>
 </div>
-
 <script>
 $('#form_event').on('submit', function (event) {
   event.preventDefault();

@@ -3,7 +3,6 @@ package post
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -39,14 +38,15 @@ type Event struct {
 }
 
 type EventDetail struct {
-	Id        int
-	EvId      int
-	StartTime string
-	EndTime   string
-	StartDate string
-	EndDate   string
-	Limit     string
-	Count     int
+	Id         int
+	EvId       int
+	StartTime  string
+	EndTime    string
+	StartDate  string
+	EndDate    string
+	Limit      string
+	Count      int
+	ShowOption bool
 }
 
 type UpdateEvent struct {
@@ -142,7 +142,15 @@ func FindDetailByID(id int) (UpdateEvent, error) {
 			return rs, err
 		}
 		v.Count = count
-		fmt.Println(v.Count)
+
+		limit, err := strconv.Atoi(v.Limit)
+		if err != nil {
+			return rs, err
+		}
+		if count < limit {
+			v.ShowOption = true
+		}
+		// fmt.Println(v.ShowOption)
 		evd = append(evd, v)
 	}
 
@@ -197,21 +205,20 @@ func InsertRegister(reg *Register) error {
 	return nil
 }
 
-// func Save(p *Post) error {
-// 	_, err := db.Exec("UPDATE posts SET title = $1, body = $2 WHERE id = $3", p.Title, p.Body, p.ID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+func GetRegister(id int) ([]Register, error) {
+	var reg []Register
+	rows, err := db.Query("SELECT fname, lname, tel, userid FROM Register WHERE event = $1 ORDER BY event ASC", id)
+	if err != nil {
+		return reg, err
+	}
 
-// func AddComment(p *Post, c *Comment) error {
-// 	r := db.QueryRow("INSERT INTO comments(body, post_id) VALUES ($1,$2) RETURNING id", c.Body, p.ID)
-// 	err := r.Scan(&c.ID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	c.PostID = p.ID
-// 	p.Comments = append(p.Comments, *c)
-// 	return nil
-// }
+	for rows.Next() {
+		var r Register
+		err := rows.Scan(&r.FName, &r.LName, &r.Tel, &r.UserId)
+		if err != nil {
+			return nil, err
+		}
+		reg = append(reg, r)
+	}
+	return reg, nil
+}
