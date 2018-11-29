@@ -96,7 +96,7 @@ func All() ([]Event, error) {
 }
 
 func Delete(id int) error {
-	_, err := db.Exec("DELETE FROM event_detail WHERE id = $1", id)
+	_, err := db.Exec("DELETE FROM events WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
