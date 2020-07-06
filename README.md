@@ -1,4 +1,4 @@
 # golang-endproject
 # golang-endproject
 
-1
+2
